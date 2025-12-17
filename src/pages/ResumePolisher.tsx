@@ -19,6 +19,7 @@ export default function ResumePolisher() {
       toast.error('Please enter a job description');
       return;
     }
+    // ! gotta handle the logic here
     toast.success('Resume polish initiated!');
   };
 
