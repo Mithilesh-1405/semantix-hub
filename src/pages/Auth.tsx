@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, JSXElementConstructor, ReactElement, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signInWithGoogle, signUp, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,23 +22,30 @@ export default function Auth() {
     }
   }, [user, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, isGoogleOAuth: boolean) => {
     e.preventDefault();
-    
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
 
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
+    if (!isGoogleOAuth) {
+      if (!email || !password) {
+        toast.error('Please fill in all fields');
+        return;
+      }
+
+      if (password.length < 6) {
+        toast.error('Password must be at least 6 characters');
+        return;
+      }
     }
 
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (isGoogleOAuth) {
+        const { error } = await signInWithGoogle();
+        if (error) {
+          toast.error(error.message);
+        }
+      } else if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
@@ -52,13 +59,13 @@ export default function Auth() {
       } else {
         const { error } = await signUp(email, password);
         if (error) {
-          if (error.message.includes('already registered')) {
-            toast.error('This email is already registered. Please sign in.');
+          if (error.message.includes("already registered")) {
+            toast.error("This email is already registered. Please sign in.");
           } else {
             toast.error(error.message);
           }
         } else {
-          toast.success('Account created successfully!');
+          toast.success("Account created successfully!");
         }
       }
     } catch (error) {
@@ -74,7 +81,7 @@ export default function Auth() {
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
       </div>
-      
+
       <Card className="w-full max-w-md relative backdrop-blur-sm border-border/50 shadow-2xl">
         <CardHeader className="space-y-1 text-center pb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -91,7 +98,7 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -131,6 +138,9 @@ export default function Auth() {
               {isLogin ? 'Sign In' : 'Sign Up'}
             </Button>
           </form>
+            <Button type="button" className="flex items-center justify-center w-full mt-2" onClick={(e) => handleSubmit(e, true)}>
+              Continue with Google
+            </Button>
           <div className="mt-6 text-center">
             <button
               type="button"
