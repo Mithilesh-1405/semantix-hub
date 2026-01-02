@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext'
-import axios, { AxiosResponse } from 'axios'
+import axios, { AxiosResponse, AxiosRequestConfig } from 'axios'
 
 
 const setAuthorization = (token: string | undefined) => {
@@ -16,9 +16,6 @@ export const useApiClient = () => {
 
     // Default base url
     axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL
-
-    // Default headers
-    axios.defaults.headers.post['Content-Type'] = 'application/json'
 
     // Get, Post methods
     const get = (url: string, params?: Record<string, unknown>) => {
@@ -39,8 +36,9 @@ export const useApiClient = () => {
         return response
     }
 
-    const create = (url: string, data: Record<string, unknown>) => {
-        const returnValue = axios.post(url, data);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const create = (url: string, data: any, config?: AxiosRequestConfig) => {
+        const returnValue = axios.post(url, data, config);
         return returnValue;
     };
 

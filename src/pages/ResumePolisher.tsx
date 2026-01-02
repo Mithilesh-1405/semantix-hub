@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import PDFUpload from '@/components/PDFUpload';
 import { Button } from '@/components/ui/button';
@@ -5,12 +6,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Sparkles, FileText } from 'lucide-react';
+import { useBackendHelper } from'@/config/backend_helper';
+
+import { AxiosError } from 'axios';
 
 export default function ResumePolisher() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState('');
+  const {polishResume} = useBackendHelper()
 
-  const handlePolish = () => {
+  const handlePolish = async () => {
     if (!selectedFile) {
       toast.error('Please upload a PDF file first');
       return;
@@ -19,8 +24,26 @@ export default function ResumePolisher() {
       toast.error('Please enter a job description');
       return;
     }
-    // ! gotta handle the logic here
-    toast.success('Resume polish initiated!');
+    try {
+      console.log("pdf file", selectedFile)
+      const response = await polishResume(selectedFile, jobDescription);
+      
+      if (response.status === 200 && response.data.success) {
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data.message || 'Something went wrong');
+      }
+    } catch (error) {
+      console.error(error);
+      const axiosError = error as AxiosError<any>;
+      if (axiosError.response) {
+        toast.error(`Error ${axiosError.response.status}: ${axiosError.response.data.message || 'Server Error'}`);
+      } else if (axiosError.request) {
+        toast.error('No response from server');
+      } else {
+        toast.error('Failed to initiate resume polish');
+      }
+    }
   };
 
   return (
