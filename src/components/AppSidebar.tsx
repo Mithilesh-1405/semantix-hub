@@ -1,4 +1,4 @@
-import { FileText, Search, LogOut } from 'lucide-react';
+import { FileText, Search, LogOut, History } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 const navItems = [
   { title: 'Resume Polisher', url: '/dashboard/resume-polisher', icon: FileText },
   { title: 'PDF Search', url: '/dashboard/pdf-search', icon: Search },
+  { title: 'History', url: '/dashboard/history', icon: History}
 ];
 
 export function AppSidebar() {

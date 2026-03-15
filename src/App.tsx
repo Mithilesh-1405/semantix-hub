@@ -10,7 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import ResumePolisher from "./pages/ResumePolisher";
 import PDFSearch from "./pages/PDFSearch";
 import NotFound from "./pages/NotFound";
-
+import History from "./pages/History";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -27,6 +27,7 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="resume-polisher" element={<ResumePolisher />} />
               <Route path="pdf-search" element={<PDFSearch />} />
+              <Route path="history" element={<History />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

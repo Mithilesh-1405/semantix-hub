@@ -1,20 +1,26 @@
 import { useApiClient } from "./api_config"
 import * as url from "./url_helper"
+import { useCallback } from 'react'
 
 export const useBackendHelper = () =>{
     const {get, create} = useApiClient();
 
-    const getData = () => get(url.GET_API)
-    const polishResume = (pdf_file: File, job_description: string) => {
+    const getData = useCallback(() => get(url.GET_API), [get])
+    const polishResume = useCallback((pdf_file: File, job_description: string) => {
         const formData = new FormData();
         formData.append('pdf_file', pdf_file);
         formData.append('job_description', job_description);
 
         return create(url.POLISH_RESUME, formData)
-    }
+    }, [create])
+    const getPolishHistory = useCallback((page: number, limit: number, search: string) => get(url.GET_POLISH_HISTORY, {page, limit, search}), [get])
+
+    const getSearchHistory = useCallback((page: number, limit: number, search: string) => get(url.GET_SEARCH_HISTORY, {page, limit, search}), [get])
 
     return{
         getData,
-        polishResume
+        polishResume,
+        getSearchHistory,
+        getPolishHistory
     }
 }

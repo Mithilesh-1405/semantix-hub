@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios'
 
+import { useCallback } from 'react'
 
 const setAuthorization = (token: string | undefined) => {
     if (token) {
@@ -12,14 +13,15 @@ const setAuthorization = (token: string | undefined) => {
 
 export const useApiClient = () => {
     const { session } = useAuth()
-    const paramKeys: string[] = []
-
+    
     // Default base url
     axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL
 
     // Get, Post methods
-    const get = (url: string, params?: Record<string, unknown>) => {
-        let response: Promise<AxiosResponse<never>>
+    const get = useCallback((url: string, params?: Record<string, unknown>) => {
+        const paramKeys: string[] = []
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let response: Promise<AxiosResponse<any>>
         setAuthorization(session?.access_token)
         if (params) {
             Object.keys(params).map(key => {
@@ -30,17 +32,17 @@ export const useApiClient = () => {
                 paramKeys && paramKeys.length ? paramKeys.join('&') : ''
             response = axios.get(`${url}?${queryString}`, params)
         } else {
-            response = axios.get(`${url}`, params)
+            response = axios.get(`${url}`, { params })
         }
 
         return response
-    }
+    }, [session?.access_token])
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const create = (url: string, data: any, config?: AxiosRequestConfig) => {
+    const create = useCallback((url: string, data: any, config?: AxiosRequestConfig) => {
         const returnValue = axios.post(url, data, config);
         return returnValue;
-    };
+    }, []);
 
     return { get, create }
 }
