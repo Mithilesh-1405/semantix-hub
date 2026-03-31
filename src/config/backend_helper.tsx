@@ -13,6 +13,15 @@ export const useBackendHelper = () =>{
 
         return create(url.POLISH_RESUME, formData)
     }, [create])
+
+    const searchPDF = useCallback((pdf_file: File, searchQuery: string) => {
+        const formData = new FormData();
+        formData.append('pdf_file', pdf_file);
+        formData.append('search_query', searchQuery);
+
+        return create(url.SEARCH_PDF, formData)
+
+    }, [create])
     const getPolishHistory = useCallback((page: number, limit: number, search: string) => get(url.GET_POLISH_HISTORY, {page, limit, search}), [get])
 
     const getSearchHistory = useCallback((page: number, limit: number, search: string) => get(url.GET_SEARCH_HISTORY, {page, limit, search}), [get])
@@ -20,6 +29,7 @@ export const useBackendHelper = () =>{
     return{
         getData,
         polishResume,
+        searchPDF,
         getSearchHistory,
         getPolishHistory
     }

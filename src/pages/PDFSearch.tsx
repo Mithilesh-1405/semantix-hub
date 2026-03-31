@@ -4,16 +4,44 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Upload, Search } from 'lucide-react';
+import { useBackendHelper } from '@/config/backend_helper';
+import { AxiosError } from 'axios';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function PDFSearch() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { searchPDF } = useBackendHelper()
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!selectedFile) {
       toast.error('Please upload a PDF file first');
       return;
     }
-    toast.success('PDF uploaded successfully!');
+    if (!searchQuery.trim()) {
+      toast.error('Please enter a valid search query!');
+      return;
+    }
+    try {
+      console.log("pdf file", selectedFile)
+      const response = await searchPDF(selectedFile, searchQuery);
+
+      if (response.status === 200 && response.data.success) {
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data.message || 'Something went wrong');
+      }
+    } catch (error) {
+      console.error(error);
+      const axiosError = error as AxiosError<{ message?: string }>;
+      if (axiosError.response) {
+        toast.error(`Error ${axiosError.response.status}: ${axiosError.response.data.message || 'Server Error'}`);
+      } else if (axiosError.request) {
+        toast.error('No response from server');
+      } else {
+        toast.error('Failed to initiate Search PDF');
+      }
+    }
   };
 
   return (
@@ -36,12 +64,25 @@ export default function PDFSearch() {
           <PDFUpload onFileSelect={setSelectedFile} selectedFile={selectedFile} />
         </div>
 
+        <div className="space-y-3">
+          <Label htmlFor="searchQuery" className="text-base font-medium">
+            Search Query
+          </Label>
+          <Textarea
+            id="searchQuery"
+            placeholder="Paste the search query here..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="min-h-[180px] resize-none"
+          />
+        </div>
+
         <Button
           onClick={handleUpload}
-          className="w-full gradient-primary text-primary-foreground hover:opacity-90 transition-opacity h-12 text-base"
+          className="w-full gradient-primary text-primary-foreground cursor-pointer hover:opacity-90 transition-opacity h-12 text-base"
         >
           <Upload className="mr-2 h-5 w-5" />
-          Upload
+          Search
         </Button>
       </div>
     </div>
