@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,86 +6,58 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 260 10% 10%;
+    --background: 240 100% 99%;
+    --foreground: 226 26% 18%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 260 10% 10%;
+    --card: 210 20% 98%;
+    --card-foreground: 226 26% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 260 10% 10%;
+    --popover-foreground: 226 26% 18%;
 
-    --primary: 262 83% 58%;
+    --primary: 239 94% 19%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 260 30% 96%;
-    --secondary-foreground: 260 10% 10%;
+    --secondary: 0 0% 90%;
+    --secondary-foreground: 239 94% 19%;
 
-    --muted: 260 20% 96%;
-    --muted-foreground: 260 10% 45%;
+    --muted: 210 20% 98%;
+    --muted-foreground: 226 26% 40%;
 
-    --accent: 280 70% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 192 67% 95%;
+    --accent-foreground: 239 94% 19%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 20% 90%;
-    --input: 260 20% 90%;
-    --ring: 262 83% 58%;
+    --border: 0 0% 88%;
+    --input: 210 20% 98%;
+    --ring: 239 94% 19%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 260 30% 98%;
-    --sidebar-foreground: 260 10% 30%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 226 26% 25%;
+    --sidebar-primary: 239 94% 19%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 30% 94%;
-    --sidebar-accent-foreground: 260 10% 20%;
-    --sidebar-border: 260 20% 92%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-accent: 192 67% 95%;
+    --sidebar-accent-foreground: 239 94% 19%;
+    --sidebar-border: 195 25% 92%;
+    --sidebar-ring: 239 94% 19%;
 
-    --font-sans: 'Inter', sans-serif;
-    --font-display: 'Sora', sans-serif;
+    --font-sans: 'Lato', sans-serif;
+    --font-display: 'Lato', sans-serif;
   }
 
   .dark {
-    --background: 260 20% 8%;
-    --foreground: 260 10% 95%;
-
-    --card: 260 20% 12%;
-    --card-foreground: 260 10% 95%;
-
-    --popover: 260 20% 12%;
-    --popover-foreground: 260 10% 95%;
-
-    --primary: 262 83% 65%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 260 20% 18%;
-    --secondary-foreground: 260 10% 95%;
-
-    --muted: 260 20% 18%;
-    --muted-foreground: 260 10% 60%;
-
-    --accent: 280 70% 65%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 62% 40%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 260 20% 20%;
-    --input: 260 20% 20%;
-    --ring: 262 83% 65%;
-
-    --sidebar-background: 260 20% 10%;
-    --sidebar-foreground: 260 10% 80%;
-    --sidebar-primary: 262 83% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 20% 16%;
-    --sidebar-accent-foreground: 260 10% 90%;
-    --sidebar-border: 260 20% 18%;
-    --sidebar-ring: 262 83% 65%;
+    --background: 239 94% 19%;
+    --foreground: 0 0% 100%;
+    --card: 239 94% 22%;
+    --card-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 239 94% 19%;
+    --border: 0 0% 35%;
+    --ring: 0 0% 100%;
   }
 }
 
@@ -96,20 +68,45 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    font-weight: 600;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    font-weight: 700;
+    color: hsl(var(--primary));
+  }
+
+  /* Force consistent weight on interactive elements */
+  button, [role="tab"], [class*="sidebar-menu-button"], .active {
+    font-weight: 600 !important;
+  }
+
+  /* Structural Table Styling to match sidebar */
+  thead {
+    @apply bg-card/50;
+  }
+  
+  tr {
+    @apply border-b border-border/40;
+  }
+
+  /* Visible input/textarea fill against background */
+  input, textarea {
+    @apply bg-input border border-border;
   }
 }
 
 @layer utilities {
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(280 70% 60%) 100%);
+    background: linear-gradient(135deg, #03045e 0%, #023e8a 100%);
   }
   
   .gradient-text {
-    background: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(280 70% 60%) 100%);
+    background: linear-gradient(135deg, #03045e 0%, #0077b6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

@@ -22,9 +22,17 @@ export const useBackendHelper = () =>{
         return create(url.SEARCH_PDF, formData)
 
     }, [create])
-    const getPolishHistory = useCallback((page: number, limit: number, search: string) => get(url.GET_POLISH_HISTORY, {page, limit, search}), [get])
+    const getPolishHistory = useCallback(
+        (page: number, limit: number, search?: string) => 
+            get(url.GET_POLISH_HISTORY, { page, limit, ...(search && search.trim() !== '' ? { search } : {}) }), 
+        [get]
+    )
 
-    const getSearchHistory = useCallback((page: number, limit: number, search: string) => get(url.GET_SEARCH_HISTORY, {page, limit, search}), [get])
+    const getSearchHistory = useCallback(
+        (page: number, limit: number, search?: string) => 
+            get(url.GET_SEARCH_HISTORY, { page, limit, ...(search && search.trim() !== '' ? { search } : {}) }), 
+        [get]
+    )
 
     return{
         getData,
