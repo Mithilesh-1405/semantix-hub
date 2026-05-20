@@ -130,66 +130,6 @@ export default function PDFSearch() {
     setPageNumber(searchResults[index].page);
   };
 
-  // Custom text renderer for react-pdf to highlight matching text
-  const highlightText = useCallback((textItem: { str: string, itemIndex: number }) => {
-    // 1. Sanitize the string to prevent breaking the DOM with raw HTML characters
-    const escapeHtml = (unsafe: string) => {
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    };
-
-    const safeStr = escapeHtml(textItem.str);
-
-    if (activeResultIndex === null || !searchResults[activeResultIndex]) {
-      return safeStr;
-    }
-
-    const currentResult = searchResults[activeResultIndex];
-    
-    // Only highlight text on the page associated with the active search result
-    if (pageNumber !== currentResult.page) {
-      return safeStr;
-    }
-
-    // Prepare normalized strings stripped of all whitespace for robust matching
-    // This allows us to match PDF text fragments even if spacing differs from the backend's extracted text.
-    const itemNoSpaces = textItem.str.replace(/\s+/g, '').toLowerCase();
-    const resultNoSpaces = currentResult.text.replace(/\s+/g, '').toLowerCase();
-    const highlightedNoSpaces = currentResult.highlightedText 
-        ? currentResult.highlightedText.replace(/\s+/g, '').toLowerCase() 
-        : '';
-    
-    // Method A: Identify if this PDF text fragment belongs to the active search result paragraph.
-    // Length > 6 ensures we don't accidentally highlight common short fragments like "the" or "and " 
-    // that might randomly appear within the result string elsewhere.
-    if (itemNoSpaces.length > 6 && (resultNoSpaces.includes(itemNoSpaces) || (highlightedNoSpaces && highlightedNoSpaces.includes(itemNoSpaces)))) {
-       return `<mark class="bg-primary/30 text-foreground px-[2px] rounded-sm shadow-sm border-b-2 border-primary">${safeStr}</mark>`;
-    }
-
-    // Method B: Fallback - Highlight significant terms from the user search query on the active result page.
-    if (searchQuery.trim()) {
-        const queryTerms = searchQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 4);
-        let htmlStr = safeStr;
-        let matchFound = false;
-        
-        for (const term of queryTerms) {
-           const regex = new RegExp(`(${term})`, 'gi');
-           if (regex.test(htmlStr)) {
-              htmlStr = htmlStr.replace(regex, `<mark class="bg-primary/20 text-foreground px-[2px] rounded-sm shadow-sm border-b-2 border-primary/50">$1</mark>`);
-              matchFound = true;
-           }
-        }
-        
-        if (matchFound) return htmlStr;
-    }
-    
-    return safeStr;
-  }, [activeResultIndex, searchResults, searchQuery, pageNumber]);
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-700">
       {/* Header Section */}
@@ -441,7 +381,6 @@ export default function PDFSearch() {
                         scale={scale}
                         renderAnnotationLayer={true}
                         renderTextLayer={true}
-                        customTextRenderer={highlightText}
                         className="transition-transform duration-300 ease-out"
                       />
                     </Document>
