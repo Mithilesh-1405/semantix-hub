@@ -6,12 +6,12 @@ export const useBackendHelper = () =>{
     const {get, create} = useApiClient();
 
     const getData = useCallback(() => get(url.GET_API), [get])
-    const polishResume = useCallback((pdf_file: File, job_description: string) => {
+    const analyseResume = useCallback((pdf_file: File, job_description: string) => {
         const formData = new FormData();
         formData.append('pdf_file', pdf_file);
         formData.append('job_description', job_description);
 
-        return create(url.POLISH_RESUME, formData)
+        return create(url.ANALYSE_RESUME, formData)
     }, [create])
 
     const searchPDF = useCallback((pdf_file: File, searchQuery: string) => {
@@ -22,9 +22,9 @@ export const useBackendHelper = () =>{
         return create(url.SEARCH_PDF, formData)
 
     }, [create])
-    const getPolishHistory = useCallback(
+    const getAnalyseHistory = useCallback(
         (page: number, limit: number, search?: string) => 
-            get(url.GET_POLISH_HISTORY, { page, limit, ...(search && search.trim() !== '' ? { search } : {}) }), 
+            get(url.GET_ANALYSE_HISTORY, { page, limit, ...(search && search.trim() !== '' ? { search } : {}) }), 
         [get]
     )
 
@@ -36,9 +36,9 @@ export const useBackendHelper = () =>{
 
     return{
         getData,
-        polishResume,
+        analyseResume,
         searchPDF,
         getSearchHistory,
-        getPolishHistory
+        getAnalyseHistory
     }
 }

@@ -6,14 +6,14 @@ function History() {
 
     return (
         <div className="w-full">
-            <Tabs defaultValue="resume-polish" className="w-full">
+            <Tabs defaultValue="resume-analyser" className="w-full">
 
                 <TabsList className="mb-4">
-                    <TabsTrigger value="resume-polish">Resume Polish</TabsTrigger>
+                    <TabsTrigger value="resume-analyser">Resume Analyser</TabsTrigger>
                     <TabsTrigger value="search-pdf">Search PDF</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="resume-polish">
+                <TabsContent value="resume-analyser">
                     <ListHistory type="resume"/>
                 </TabsContent>
 

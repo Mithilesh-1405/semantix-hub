@@ -1,5 +1,5 @@
 export const GET_API = "api/v1/"
-export const POLISH_RESUME = "api/v1/pdf/polish-resume"
+export const ANALYSE_RESUME = "api/v1/pdf/analyse-resume"
 export const SEARCH_PDF = "api/v1/pdf/search-pdf"
 export const GET_SEARCH_HISTORY = "api/v1/pdf/pdf-search-history"
-export const GET_POLISH_HISTORY = "api/v1/pdf/pdf-polish-history"
+export const GET_ANALYSE_HISTORY = "api/v1/pdf/pdf-analyse-history"

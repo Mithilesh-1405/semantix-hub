@@ -15,35 +15,35 @@
     --popover: 0 0% 100%;
     --popover-foreground: 226 26% 18%;
 
-    --primary: 239 94% 19%;
+    --primary: 222 84% 45%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 90%;
-    --secondary-foreground: 239 94% 19%;
+    --secondary-foreground: 222 84% 45%;
 
     --muted: 210 20% 98%;
     --muted-foreground: 226 26% 40%;
 
     --accent: 192 67% 95%;
-    --accent-foreground: 239 94% 19%;
+    --accent-foreground: 222 84% 45%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
+    --border: 220 13% 80%;
     --input: 210 20% 98%;
-    --ring: 239 94% 19%;
+    --ring: 222 84% 45%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 210 20% 98%;
     --sidebar-foreground: 226 26% 25%;
-    --sidebar-primary: 239 94% 19%;
+    --sidebar-primary: 222 84% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 192 67% 95%;
-    --sidebar-accent-foreground: 239 94% 19%;
-    --sidebar-border: 195 25% 92%;
-    --sidebar-ring: 239 94% 19%;
+    --sidebar-accent-foreground: 222 84% 45%;
+    --sidebar-border: 220 13% 85%;
+    --sidebar-ring: 222 84% 45%;
 
     --font-sans: 'Lato', sans-serif;
     --font-display: 'Lato', sans-serif;
@@ -64,6 +64,11 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.15);
+    color: hsl(var(--primary));
   }
 
   body {
@@ -102,13 +107,56 @@
 
 @layer utilities {
   .gradient-primary {
-    background: linear-gradient(135deg, #03045e 0%, #023e8a 100%);
+    background: linear-gradient(135deg, #185adb 0%, #0077b6 100%);
   }
   
   .gradient-text {
-    background: linear-gradient(135deg, #03045e 0%, #0077b6 100%);
+    background: linear-gradient(135deg, #185adb 0%, #00b4d8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .active-scale {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+  }
+  
+  .active-scale:active {
+    transform: scale(0.97);
+  }
+  
+  .active-scale-lg:active {
+    transform: scale(0.99);
+  }
+
+  /* Custom scrollbar utility */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }

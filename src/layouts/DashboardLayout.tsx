@@ -2,7 +2,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Layers, Loader2 } from 'lucide-react';
 
 export default function DashboardLayout() {
   const { user, loading } = useAuth();
@@ -26,10 +26,10 @@ export default function DashboardLayout() {
         <div className="flex-1 flex flex-col">
           <header className="h-16 border-b border-border flex items-center justify-between px-4 bg-card">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold font-display gradient-text">Semantix</span>
+              <SidebarTrigger className="text-muted-foreground hover:text-foreground active-scale rounded-md" />
+              <div className="flex items-center gap-2 group cursor-pointer">
+                <Layers className="h-5 w-5 text-primary group-hover:scale-105 group-hover:rotate-12 transition-all duration-300" />
+                <span className="text-xl font-bold font-display gradient-text tracking-wide">Semantix</span>
               </div>
             </div>
           </header>

@@ -6,10 +6,10 @@ import { useBackendHelper } from '@/config/backend_helper';
 
 const features = [
   {
-    title: 'Resume Polisher',
+    title: 'Resume Analyser',
     description: 'Upload your resume and get tailored improvements based on job descriptions',
     icon: FileText,
-    path: '/dashboard/resume-polisher',
+    path: '/dashboard/resume-analyser',
   },
   {
     title: 'PDF Search',
@@ -21,7 +21,7 @@ const features = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const {getData} = useBackendHelper()
+  const { getData } = useBackendHelper()
 
   useEffect(() => {
     const fetchData = async () => {

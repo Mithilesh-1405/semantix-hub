@@ -25,7 +25,7 @@ function formatBytes(bytes: string | number, decimals = 2) {
 function ListHistory({ type }: { type: string }) {
     const [historyData, setHistoryData] = useState([]);
     const [loading, setLoading] = useState(false);
-    const { getPolishHistory, getSearchHistory } = useBackendHelper()
+    const { getAnalyseHistory, getSearchHistory } = useBackendHelper()
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [search, setSearch] = useState('');
@@ -37,18 +37,18 @@ function ListHistory({ type }: { type: string }) {
     }, [type, search]);
 
     useEffect(() => {
-        async function getPolishHistoryData() {
+        async function getAnalyseHistoryData() {
             setLoading(true);
             try {
-                const response = await getPolishHistory(page, limit, search);
+                const response = await getAnalyseHistory(page, limit, search);
                 console.log(response)
                 if (response.status === 200 && response.data.success) {
                     setHistoryData(response.data.data);
-                    
+
                     // Attempt to extract total pages or total count from backend response
                     const total = response.data.total || response.data.totalCount || response.data.pagination?.total;
                     const resTotalPages = response.data.totalPages || response.data.pagination?.totalPages;
-                    
+
                     if (resTotalPages) {
                         setTotalPages(resTotalPages);
                     } else if (total !== undefined) {
@@ -77,10 +77,10 @@ function ListHistory({ type }: { type: string }) {
                 console.log(response)
                 if (response.status === 200 && response.data.success) {
                     setHistoryData(response.data.data);
-                    
+
                     const total = response.data.total || response.data.totalCount || response.data.pagination?.total;
                     const resTotalPages = response.data.totalPages || response.data.pagination?.totalPages;
-                    
+
                     if (resTotalPages) {
                         setTotalPages(resTotalPages);
                     } else if (total !== undefined) {
@@ -101,12 +101,12 @@ function ListHistory({ type }: { type: string }) {
             }
         }
         if (type === 'resume') {
-            getPolishHistoryData();
+            getAnalyseHistoryData();
         }
         else {
             getSearchHistoryData()
         }
-    }, [type, page, limit, search, getPolishHistory, getSearchHistory])
+    }, [type, page, limit, search, getAnalyseHistory, getSearchHistory])
 
     const getPageNumbers = () => {
         const pages = [];
@@ -146,17 +146,17 @@ function ListHistory({ type }: { type: string }) {
         <div className="w-full rounded-md border shadow-sm mt-4 bg-card overflow-hidden">
             <Table>
                 <TableHeader>
-                    <TableRow className="bg-muted/60">
-                        <TableHead className="w-[250px] font-semibold">File Name</TableHead>
-                        <TableHead className="font-semibold">Date</TableHead>
+                    <TableRow className="bg-muted/50 border-b">
+                        <TableHead className="w-[250px] font-bold text-sm text-foreground">File Name</TableHead>
+                        <TableHead className="font-bold text-sm text-foreground">Date</TableHead>
                         {type === 'resume' ? (
                             <>
-                            <TableHead className="font-semibold">Size</TableHead>
-                                <TableHead className="font-semibold">Match Score</TableHead>
-                                <TableHead className="max-w-[300px] font-semibold">Description</TableHead>
+                                <TableHead className="font-bold text-sm text-foreground">Size</TableHead>
+                                <TableHead className="font-bold text-sm text-foreground">Match Score</TableHead>
+                                <TableHead className="max-w-[300px] font-bold text-sm text-foreground">Description</TableHead>
                             </>
                         ) : (
-                            <TableHead className="max-w-[400px] font-semibold">Search Query</TableHead>
+                            <TableHead className="max-w-[400px] font-bold text-sm text-foreground">Search Query</TableHead>
                         )}
                     </TableRow>
                 </TableHeader>
@@ -169,23 +169,29 @@ function ListHistory({ type }: { type: string }) {
                         </TableRow>
                     ) : historyData.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground font-normal">
                                 No history found.
                             </TableCell>
                         </TableRow>
                     ) : (
                         historyData.map((data: Record<string, any>, index: number) => (
-                            <TableRow key={data.id || index} className="hover:bg-muted/40 transition-colors">
-                                <TableCell className="font-medium text-foreground">
-                                    {data.file_name || "-"}
+                            <TableRow key={data.id || index} className="hover:bg-muted/30 transition-colors border-b">
+                                <TableCell>
+                                    <p className="text-sm font-normal text-foreground">
+                                        {data.file_name || "-"}
+                                    </p>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">
-                                    {data.created_at ? format(new Date(data.created_at), "MMM d, yyyy h:mm a") : '-'}
+                                <TableCell>
+                                    <p className="text-sm font-normal text-muted-foreground">
+                                        {data.created_at ? format(new Date(data.created_at), "MMM d, yyyy h:mm a") : '-'}
+                                    </p>
                                 </TableCell>
                                 {type === 'resume' ? (
                                     <>
-                                        <TableCell className="text-muted-foreground">
-                                            {data.file_size ? formatBytes(Number(data.file_size)) : '-'}
+                                        <TableCell>
+                                            <p className="text-sm font-normal text-muted-foreground">
+                                                {data.file_size ? formatBytes(Number(data.file_size)) : '-'}
+                                            </p>
                                         </TableCell>
                                         <TableCell>
                                             {data.similarity_score !== undefined && data.similarity_score !== null ? (
@@ -196,19 +202,25 @@ function ListHistory({ type }: { type: string }) {
                                                             style={{ width: `${Math.min(100, data.similarity_score * 100)}%` }}
                                                         />
                                                     </div>
-                                                    <span className="text-xs font-medium text-muted-foreground">
+                                                    <p className="text-xs font-normal text-muted-foreground">
                                                         {(data.similarity_score * 100).toFixed(1)}%
-                                                    </span>
+                                                    </p>
                                                 </div>
-                                            ) : '-'}
+                                            ) : (
+                                                <p className="text-sm font-normal text-muted-foreground">-</p>
+                                            )}
                                         </TableCell>
-                                        <TableCell className="max-w-[250px] truncate text-muted-foreground" title={data.job_description}>
-                                            {data.job_description || '-'}
+                                        <TableCell className="max-w-[250px]" title={data.job_description}>
+                                            <p className="text-sm font-normal text-muted-foreground truncate">
+                                                {data.job_description || '-'}
+                                            </p>
                                         </TableCell>
                                     </>
                                 ) : (
-                                    <TableCell className="max-w-[350px] truncate text-muted-foreground" title={data.search_query || data.query}>
-                                        {data.search_query || data.query || '-'}
+                                    <TableCell className="max-w-[350px]" title={data.search_query || data.query}>
+                                        <p className="text-sm font-normal text-muted-foreground truncate">
+                                            {data.search_query || data.query || '-'}
+                                        </p>
                                     </TableCell>
                                 )}
                             </TableRow>
@@ -216,9 +228,9 @@ function ListHistory({ type }: { type: string }) {
                     )}
                 </TableBody>
             </Table>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-4 border-t gap-4">
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm font-semibold text-muted-foreground">
                     Showing page {page} of {totalPages} {historyData.length > 0 ? `(${historyData.length} items)` : ''}
                 </div>
                 <div className="flex items-center space-x-1">
@@ -232,14 +244,14 @@ function ListHistory({ type }: { type: string }) {
                         <ChevronLeft className="h-4 w-4 mr-1" />
                         Prev
                     </Button>
-                    
+
                     {getPageNumbers().map((pageNum, idx) => (
                         pageNum === '...' ? (
                             <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">...</span>
                         ) : (
                             <Button
                                 key={`page-${pageNum}`}
-                                variant={page === pageNum ? "default" : "outline"}
+                                variant={page === pageNum ? "secondary" : "outline"}
                                 size="sm"
                                 onClick={() => setPage(pageNum as number)}
                                 disabled={loading}
