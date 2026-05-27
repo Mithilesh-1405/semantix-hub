@@ -7,10 +7,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Auth from "./pages/Auth";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
-import ResumePolisher from "./pages/ResumePolisher";
+import ResumeAnalyser from "./pages/ResumeAnalyser";
 import PDFSearch from "./pages/PDFSearch";
 import NotFound from "./pages/NotFound";
-
+import History from "./pages/History";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -25,8 +25,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
-              <Route path="resume-polisher" element={<ResumePolisher />} />
+              <Route path="resume-analyser" element={<ResumeAnalyser />} />
               <Route path="pdf-search" element={<PDFSearch />} />
+              <Route path="history" element={<History />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { FileText, Search, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect } from 'react';
+import { useBackendHelper } from '@/config/backend_helper';
 
 const features = [
   {
-    title: 'Resume Polisher',
+    title: 'Resume Analyser',
     description: 'Upload your resume and get tailored improvements based on job descriptions',
     icon: FileText,
-    path: '/dashboard/resume-polisher',
+    path: '/dashboard/resume-analyser',
   },
   {
     title: 'PDF Search',
@@ -19,6 +21,19 @@ const features = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { getData } = useBackendHelper()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getData();
+        console.log(response);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto">

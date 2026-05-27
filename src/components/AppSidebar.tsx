@@ -1,4 +1,4 @@
-import { FileText, Search, LogOut } from 'lucide-react';
+import { FileText, Search, LogOut, History } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -15,8 +15,9 @@ import {
 import { Button } from '@/components/ui/button';
 
 const navItems = [
-  { title: 'Resume Polisher', url: '/dashboard/resume-polisher', icon: FileText },
+  { title: 'Resume Analyser', url: '/dashboard/resume-analyser', icon: FileText },
   { title: 'PDF Search', url: '/dashboard/pdf-search', icon: Search },
+  { title: 'History', url: '/dashboard/history', icon: History}
 ];
 
 export function AppSidebar() {
@@ -36,8 +37,8 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-sidebar-accent"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 ease-out text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 active-scale border-l-2 border-transparent"
+                      activeClassName="bg-sidebar-accent !text-primary font-semibold shadow-sm !border-l-2 !border-primary rounded-l-none"
                     >
                       <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
