@@ -219,7 +219,7 @@ export default function PDFSearch() {
             {[
               { title: "Semantic Analysis", desc: "Understands context, not just keywords" },
               { title: "Instant Highlights", desc: "Finds relevant segments immediately" },
-              { title: "Smart Navigation", desc: "Click results to jump to the right page" }
+              { title: "User History", desc: "Track previous searches" }
             ].map((feature, i) => (
               <div key={i} className="space-y-1.5 p-4 rounded-xl border border-border/40 bg-card/30 hover:bg-muted/20 hover:scale-[1.01] active-scale transition-all duration-300">
                 <h3 className="font-bold text-xs text-foreground">{feature.title}</h3>
