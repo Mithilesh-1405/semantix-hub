@@ -29,7 +29,7 @@ export default function DashboardLayout() {
               <SidebarTrigger className="text-muted-foreground hover:text-foreground active-scale rounded-md" />
               <div className="flex items-center gap-2 group cursor-pointer">
                 <Layers className="h-5 w-5 text-primary group-hover:scale-105 group-hover:rotate-12 transition-all duration-300" />
-                <span className="text-xl font-bold font-display gradient-text tracking-wide">Semantix</span>
+                <span className="text-xl tracking-wide tasa-orbiter">Semantix</span>
               </div>
             </div>
           </header>

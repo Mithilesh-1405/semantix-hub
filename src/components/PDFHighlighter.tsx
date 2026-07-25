@@ -25,59 +25,175 @@ interface HighlightRect {
     height: number;
 }
 
-// Normalize text helper for high-accuracy semantic matching
-function getNormalizedMapping(text: string) {
-    let normalized = '';
-    const indexMap: number[] = [];
-
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        if (/\s/.test(char)) {
-            if (normalized.length > 0 && normalized[normalized.length - 1] !== ' ') {
-                normalized += ' ';
-                indexMap.push(i);
-            }
-        } else {
-            let normalizedChar = char.toLowerCase();
-            if (normalizedChar === '’' || normalizedChar === '‘' || normalizedChar === '`') {
-                normalizedChar = "'";
-            } else if (normalizedChar === '“' || normalizedChar === '”') {
-                normalizedChar = '"';
-            } else if (normalizedChar === '–' || normalizedChar === '—') {
-                normalizedChar = '-';
-            }
-            normalized += normalizedChar;
-            indexMap.push(i);
-        }
-    }
-    return { normalized, indexMap };
+// Normalize text for fuzzy matching:
+// - collapse all whitespace to single space
+// - lowercase
+// - normalize quotes/dashes
+// - strip citation brackets like [12]
+function normalize(text: string): string {
+    return text
+        .replace(/\[\s*\d+\s*\]/g, ' ')   // strip [12] style citations
+        .replace(/[\u2018\u2019`]/g, "'")
+        .replace(/[\u201c\u201d]/g, '"')
+        .replace(/[\u2013\u2014]/g, '-')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
-export default function PDFHighlighter({
-    activeResult,
-    currentPage,
-    scale,
-}: PDFHighlighterProps) {
+// Build a flat string from all text layer spans, tracking which span + offset each char maps back to
+function buildTextMap(spans: HTMLSpanElement[]) {
+    let full = '';
+    // charMap[i] = { spanIndex, localOffset } for char i in `full`
+    const charMap: { spanIndex: number; localOffset: number }[] = [];
+
+    spans.forEach((span, spanIndex) => {
+        const t = span.textContent ?? '';
+        for (let i = 0; i < t.length; i++) {
+            charMap.push({ spanIndex, localOffset: i });
+            full += t[i];
+        }
+    });
+
+    return { full, charMap };
+}
+
+// Given a start..end range in the original full string, get DOMRects relative to the text layer
+function getRectsForOriginalRange(
+    start: number,
+    end: number,
+    spans: HTMLSpanElement[],
+    charMap: { spanIndex: number; localOffset: number }[],
+    textLayerRect: DOMRect
+): HighlightRect[] {
+    const rects: HighlightRect[] = [];
+    if (start >= end) return rects;
+
+    // Group consecutive chars by span
+    let i = start;
+    while (i < end) {
+        const { spanIndex, localOffset } = charMap[i];
+        let j = i + 1;
+        while (
+            j < end &&
+            charMap[j].spanIndex === spanIndex &&
+            charMap[j].localOffset === localOffset + (j - i)
+        ) {
+            j++;
+        }
+
+        const span = spans[spanIndex];
+        const textNode = span.firstChild;
+        if (textNode?.nodeType === Node.TEXT_NODE) {
+            try {
+                const range = document.createRange();
+                range.setStart(textNode, localOffset);
+                range.setEnd(textNode, localOffset + (j - i));
+                const r = range.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) {
+                    rects.push({
+                        top: r.top - textLayerRect.top,
+                        left: r.left - textLayerRect.left,
+                        width: r.width,
+                        height: r.height,
+                    });
+                }
+            } catch (_) { /* span text shorter than expected */ }
+        }
+        i = j;
+    }
+    return rects;
+}
+
+// Merge rects on the same visual line into one wide rect
+function mergeRects(rects: HighlightRect[]): HighlightRect[] {
+    if (!rects.length) return [];
+    const sorted = [...rects].sort((a, b) => a.top - b.top || a.left - b.left);
+    const merged: HighlightRect[] = [];
+    let cur = { ...sorted[0] };
+    for (let i = 1; i < sorted.length; i++) {
+        const r = sorted[i];
+        if (Math.abs(r.top - cur.top) < 5) {
+            const right = Math.max(cur.left + cur.width, r.left + r.width);
+            cur.left = Math.min(cur.left, r.left);
+            cur.width = right - cur.left;
+            cur.height = Math.max(cur.height, r.height);
+        } else {
+            merged.push(cur);
+            cur = { ...r };
+        }
+    }
+    merged.push(cur);
+    return merged;
+}
+
+// Try to find `query` inside `haystack` (both already normalized) and return the match index
+function findNormalized(haystack: string, query: string): number {
+    const nq = normalize(query);
+    if (nq.length < 6) return -1;
+    return haystack.indexOf(nq);
+}
+
+// Build a mapping: normalizedIndex → originalIndex
+// so we can go from a match in the normalized string back to the original string
+function buildNormMap(original: string): { normStr: string; normToOrig: number[] } {
+    let normStr = '';
+    const normToOrig: number[] = [];
+    let lastWasSpace = false;
+
+    for (let i = 0; i < original.length; i++) {
+        const raw = original[i];
+        // apply same transforms as normalize()
+        if (/\[\s*\d+\s*\]/.test(original.slice(i))) {
+            // skip citation bracket entirely
+            const m = original.slice(i).match(/^\[\s*\d+\s*\]/);
+            if (m) {
+                i += m[0].length - 1;
+                if (!lastWasSpace) {
+                    normStr += ' ';
+                    normToOrig.push(i);
+                    lastWasSpace = true;
+                }
+                continue;
+            }
+        }
+        if (/\s/.test(raw)) {
+            if (!lastWasSpace) {
+                normStr += ' ';
+                normToOrig.push(i);
+                lastWasSpace = true;
+            }
+        } else {
+            let c = raw.toLowerCase();
+            if (c === '\u2018' || c === '\u2019' || c === '`') c = "'";
+            else if (c === '\u201c' || c === '\u201d') c = '"';
+            else if (c === '\u2013' || c === '\u2014') c = '-';
+            normStr += c;
+            normToOrig.push(i);
+            lastWasSpace = false;
+        }
+    }
+    return { normStr, normToOrig };
+}
+
+export default function PDFHighlighter({ activeResult, currentPage, scale }: PDFHighlighterProps) {
     const [highlightRects, setHighlightRects] = useState<HighlightRect[]>([]);
     const [containerStyle, setContainerStyle] = useState<React.CSSProperties>({});
 
     useEffect(() => {
         let active = true;
-        let observer: MutationObserver | null = null;
 
-        const performHighlight = () => {
+        const run = () => {
+            if (!active) return;
+
             if (!activeResult || activeResult.page !== currentPage) {
                 setHighlightRects([]);
                 return;
             }
 
-            const textLayer = document.querySelector('[class*="textLayer"]') as HTMLElement;
-            if (!textLayer) {
-                setHighlightRects([]);
-                return;
-            }
+            const textLayer = document.querySelector('[class*="textLayer"]') as HTMLElement | null;
+            if (!textLayer) { setHighlightRects([]); return; }
 
-            // Sync the highlights overlay container to perfectly match the textLayer positioning
             setContainerStyle({
                 position: 'absolute',
                 top: textLayer.offsetTop,
@@ -88,171 +204,115 @@ export default function PDFHighlighter({
                 zIndex: 10,
             });
 
-            const text = activeResult.text;
-            if (!text || text.trim().length < 5) {
-                setHighlightRects([]);
-                return;
+            const spans = Array.from(textLayer.querySelectorAll('span')) as HTMLSpanElement[];
+            if (!spans.length) { setHighlightRects([]); return; }
+
+            const { full, charMap } = buildTextMap(spans);
+            const { normStr, normToOrig } = buildNormMap(full);
+            const textLayerRect = textLayer.getBoundingClientRect();
+
+            const getRects = (query: string): HighlightRect[] => {
+                const nq = normalize(query);
+                if (nq.length < 6) return [];
+                const matchAt = normStr.indexOf(nq);
+                if (matchAt === -1) return [];
+                const origStart = normToOrig[matchAt];
+                const origEnd = normToOrig[Math.min(matchAt + nq.length - 1, normToOrig.length - 1)] + 1;
+                return getRectsForOriginalRange(origStart, origEnd, spans, charMap, textLayerRect);
+            };
+
+            // --- Strategy 1: full text ---
+            let rects = getRects(activeResult.text);
+
+            // --- Strategy 2: sentence splits ---
+            if (!rects.length) {
+                const sentences = activeResult.text
+                    .split(/(?<=\.)\s+(?=[A-Z\[])/)
+                    .flatMap(s => s.split(/;\s+/))
+                    .map(s => s.trim())
+                    .filter(s => s.length >= 20);
+                const combined: HighlightRect[] = [];
+                for (const s of sentences) combined.push(...getRects(s));
+                if (combined.length) rects = combined;
             }
 
-            const spans = Array.from(textLayer.querySelectorAll('span'));
-            if (spans.length === 0) {
-                setHighlightRects([]);
-                return;
-            }
-
-            // Build unified text content of the page
-            let fullText = '';
-            const spanIndices: { span: HTMLSpanElement; start: number; end: number }[] = [];
-
-            spans.forEach((span) => {
-                const textVal = span.textContent || '';
-                const start = fullText.length;
-                fullText += textVal;
-                const end = fullText.length;
-                spanIndices.push({ span, start, end });
-            });
-
-            const { normalized: normalizedPage, indexMap } = getNormalizedMapping(fullText);
-
-            // Resilient matching strategy:
-            // 1. Try full search result text
-            // 2. Try individual sentences split by punctuation (min 15 chars)
-            // 3. Try first 80 characters of the text
-            const searchCandidates = [
-                text,
-                ...text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length >= 15),
-                text.substring(0, Math.min(80, text.length)).trim()
-            ];
-
-            let matched = false;
-            for (const candidate of searchCandidates) {
-                const { normalized: normalizedQuery } = getNormalizedMapping(candidate);
-                if (normalizedQuery.length < 8) continue;
-
-                const matchIdx = normalizedPage.indexOf(normalizedQuery);
-                if (matchIdx !== -1) {
-                    // Match found! Identify original start & end character positions
-                    const matchStartInOriginal = indexMap[matchIdx];
-                    const lastCharIdx = matchIdx + normalizedQuery.length - 1;
-                    const matchEndInOriginal = indexMap[lastCharIdx] + 1;
-
-                    const newRects: HighlightRect[] = [];
-                    const textLayerRect = textLayer.getBoundingClientRect();
-
-                    // Calculate overlay bounds using precise browser DOM range selectors
-                    spanIndices.forEach(({ span, start: spanStart, end: spanEnd }) => {
-                        const localStart = Math.max(0, matchStartInOriginal - spanStart);
-                        const localEnd = Math.min(spanEnd - spanStart, matchEndInOriginal - spanStart);
-
-                        if (localEnd > localStart) {
-                            const textNode = span.firstChild;
-                            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-                                try {
-                                    const range = document.createRange();
-                                    range.setStart(textNode, localStart);
-                                    range.setEnd(textNode, localEnd);
-
-                                    const rangeRect = range.getBoundingClientRect();
-                                    if (rangeRect.width > 0 && rangeRect.height > 0) {
-                                        newRects.push({
-                                            top: rangeRect.top - textLayerRect.top,
-                                            left: rangeRect.left - textLayerRect.left,
-                                            width: rangeRect.width,
-                                            height: rangeRect.height,
-                                        });
-                                    }
-                                } catch (e) {
-                                    // Soft catch for text nodes that might have changed dynamically
-                                }
-                            }
-                        }
-                    });
-
-                    if (newRects.length > 0) {
-                        setHighlightRects(newRects);
-
-                        // Smoothly scroll the highlighted section to the vertical center of the view panel
-                        const firstRect = newRects[0];
-                        const scrollContainer = textLayer.closest('.overflow-auto') || textLayer.parentElement;
-                        if (scrollContainer) {
-                            const pageOffsetTop = textLayer.getBoundingClientRect().top - scrollContainer.getBoundingClientRect().top + scrollContainer.scrollTop;
-                            const targetScrollTop = pageOffsetTop + firstRect.top - (scrollContainer.offsetHeight / 2);
-                            
-                            scrollContainer.scrollTo({
-                                top: Math.max(0, targetScrollTop),
-                                behavior: 'smooth'
-                            });
-                        }
-                        matched = true;
-                        break;
+            // --- Strategy 3: sliding word windows (largest first) ---
+            if (!rects.length) {
+                const words = activeResult.text.trim().split(/\s+/).filter(Boolean);
+                outer:
+                for (const windowSize of [15, 12, 10, 8]) {
+                    if (words.length < windowSize) continue;
+                    const combined: HighlightRect[] = [];
+                    const seen = new Set<string>();
+                    for (let i = 0; i <= words.length - windowSize; i++) {
+                        const phrase = words.slice(i, i + windowSize).join(' ');
+                        const nq = normalize(phrase);
+                        if (seen.has(nq)) continue;
+                        seen.add(nq);
+                        combined.push(...getRects(phrase));
                     }
+                    if (combined.length) { rects = combined; break outer; }
                 }
             }
 
-            if (!matched) {
+            // --- Strategy 4: first 80 chars ---
+            if (!rects.length) {
+                rects = getRects(activeResult.text.slice(0, 80));
+            }
+
+            if (rects.length) {
+                const merged = mergeRects(rects);
+                setHighlightRects(merged);
+
+                // Scroll to first highlight
+                const scrollContainer = (
+                    textLayer.closest('.overflow-auto') ??
+                    textLayer.parentElement
+                ) as HTMLElement | null;
+                if (scrollContainer) {
+                    const pageTop =
+                        textLayer.getBoundingClientRect().top -
+                        scrollContainer.getBoundingClientRect().top +
+                        scrollContainer.scrollTop;
+                    const target = pageTop + merged[0].top - scrollContainer.offsetHeight / 2;
+                    scrollContainer.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+                }
+            } else {
                 setHighlightRects([]);
             }
         };
 
-        // Delay execution slightly to ensure react-pdf renders textLayer spans
-        const timeoutId = setTimeout(() => {
-            if (!active) return;
-            performHighlight();
+        // Wait for react-pdf text layer to finish rendering
+        const id = setTimeout(run, 350);
+        return () => { active = false; clearTimeout(id); };
 
-            // Observe dynamic DOM changes in the textLayer (PDF.js lazy-loading)
-            const textLayer = document.querySelector('[class*="textLayer"]') as HTMLElement;
-            if (textLayer) {
-                observer = new MutationObserver(() => {
-                    performHighlight();
-                });
-                observer.observe(textLayer, { childList: true, subtree: true });
-            }
-        }, 300);
-
-        return () => {
-            active = false;
-            clearTimeout(timeoutId);
-            if (observer) {
-                observer.disconnect();
-            }
-        };
     }, [activeResult, currentPage, scale]);
 
     return (
         <div style={containerStyle}>
-            {highlightRects.map((rect, idx) => (
+            {highlightRects.map((rect, i) => (
                 <div
-                    key={idx}
-                    className="pdf-highlight-overlay"
+                    key={i}
                     style={{
                         position: 'absolute',
                         top: rect.top,
                         left: rect.left,
                         width: rect.width,
                         height: rect.height,
+                        backgroundColor: 'rgba(255, 213, 0, 0.55)',
+                        borderBottom: '2px solid rgba(200, 160, 0, 0.9)',
+                        borderRadius: '1.5px',
+                        boxShadow: '0 1px 4px rgba(200, 160, 0, 0.2)',
+                        mixBlendMode: 'multiply',
                         pointerEvents: 'none',
+                        animation: 'highlight-pulse 1.5s ease-out infinite alternate',
                     }}
                 />
             ))}
             <style>{`
-                .pdf-highlight-overlay {
-                    background-color: rgba(24, 90, 219, 0.25) !important;
-                    border-bottom: 2px solid rgba(24, 90, 219, 0.8) !important;
-                    border-radius: 1.5px !important;
-                    box-shadow: 0 1px 3px rgba(24, 90, 219, 0.15) !important;
-                    animation: highlight-pulse 1.5s ease-out infinite alternate;
-                    mix-blend-mode: multiply;
-                }
-
                 @keyframes highlight-pulse {
-                    0% {
-                        background-color: rgba(24, 90, 219, 0.2);
-                        box-shadow: 0 1px 3px rgba(24, 90, 219, 0.1);
-                    }
-                    100% {
-                        background-color: rgba(24, 90, 219, 0.3);
-                        box-shadow: 0 1px 6px rgba(24, 90, 219, 0.25);
-                    }
+                    0%   { background-color: rgba(255, 213, 0, 0.40); }
+                    100% { background-color: rgba(255, 213, 0, 0.65); }
                 }
             `}</style>
         </div>

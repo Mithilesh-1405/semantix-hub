@@ -1,5 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
 
+/* TASA Orbiter Display Medium (500) - local/webfont placeholders
+   Place font files at: /public/fonts/TASA-Orbiter-Display-Medium.woff2
+   and /public/fonts/TASA-Orbiter-Display-Medium-Italic.woff2 */
+@font-face {
+  font-family: 'TASA Orbiter Display Medium';
+  src: url('/fonts/TASA-Orbiter-Display-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'TASA Orbiter Display Medium';
+  src: url('/fonts/TASA-Orbiter-Display-Medium-Italic.woff2') format('woff2');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Fallback placeholder family name (for specificity) */
+@font-face {
+  font-family: 'TASA Orbiter Display Medium Placeholder';
+  src: local('Arial');
+  font-weight: 500;
+  font-style: normal;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -158,5 +184,14 @@
 
   .animate-fade-in-up {
     animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .tasa-orbiter {
+    font-family: 'TASA Orbiter Display Medium', 'TASA Orbiter Display Medium Placeholder', sans-serif;
+    /* font-weight: 800; */
+    font-weight: bold;
+    font-style: italic;
+    color: rgb(0, 0, 238);
+    letter-spacing: 0.11em;
   }
 }
